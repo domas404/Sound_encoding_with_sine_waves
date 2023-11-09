@@ -3,26 +3,42 @@ from tkinter import filedialog
 import soundfile as sf
 import numpy as np
 import os
-
 def writeToFile(data, channels):
     file_path = "compressed_audio.txt"
     
     if channels == 1:
         with open(file_path, "w") as file:
             for i in range(0,len(data)):
-                file.write(str(data[i][0]) + ", " +str(data[i][1]) + "\n")
+                file.write(str(data[i][0]) + ", " +str(data[i][1]) + ";")
     else:
         with open(file_path, "w") as file:
             for i in range(0,len(data)): 
                 for j in range(0,len(data[i])):
                     file.write(str(data[i][j][0]) + ", " +str(data[i][j][1]) + ";")
                 file.write(str("\n"))
+def writeToBinaryFile(channels,data):
+    array = np.array(data)
+    print(array)
+    array = array.tobytes()
+    file_path = "compressed_audio.bin"
+    if channels == 1:
+        with open(file_path, 'wb') as file:
+            file.write(array)
+    else:
+        with open(file_path, "w") as file:
+            for i in range(0,len(data)): 
+                for j in range(0,len(data[i])):
+                    file.write(str(data[i][j][0]) + ", " +str(data[i][j][1]) + ";")
+                file.write(str("\n"))
+    
 def calculateFileSizeDifferance(fileA, fileB):
     #check if files exist
     if os.path.exists(fileA) and os.path.exists(fileB):
         #get file sizes
         fileA_size = os.path.getsize(fileA)
         fileB_size = os.path.getsize(fileB)
+        print(fileA_size)
+        print(fileB_size)
         if fileA_size > fileB_size:
             temp = fileA_size
             fileA_size = fileB_size
@@ -84,11 +100,12 @@ if __name__ == "__main__":
        
         compressed_data = []
         if info.channels == 1:
-            compressed_data.append(compressed_data(audio_data))
+            compressed_data = compress_data(audio_data)
         else:
             for i in range(0,audio_data.shape[1]):
                 compressed_data.append(compress_data(audio_data[:,i]))
         writeToFile(compressed_data,info.channels)
+        writeToBinaryFile(info.channels,compressed_data)
         calculateFileSizeDifferance(os.path.abspath("compressed_audio.txt"),os.path.abspath(file_path))
     else:
         print("No file selected")

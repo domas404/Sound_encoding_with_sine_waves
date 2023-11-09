@@ -3,34 +3,21 @@ from tkinter import filedialog
 import soundfile as sf
 import numpy as np
 import os
-def writeToFile(data, channels):
+
+def writeToFile(data):
     file_path = "compressed_audio.txt"
-    
-    if channels == 1:
-        with open(file_path, "w") as file:
-            for i in range(0,len(data)):
-                file.write(str(data[i][0]) + ", " +str(data[i][1]) + ";")
-    else:
-        with open(file_path, "w") as file:
-            for i in range(0,len(data)): 
-                for j in range(0,len(data[i])):
-                    file.write(str(data[i][j][0]) + ", " +str(data[i][j][1]) + ";")
-                file.write(str("\n"))
-def writeToBinaryFile(channels,data):
+    with open(file_path, "a") as file:
+        for i in range(0,len(data)):
+            file.write(str(data[i][0])+" "+str(data[i][1]) + ";")
+        file.write("\n")
+        
+def writeToBinaryFile(data):
     array = np.array(data)
-    print(array)
-    array = array.tobytes()
+    byte_array = array.tobytes()
     file_path = "compressed_audio.bin"
-    if channels == 1:
-        with open(file_path, 'wb') as file:
-            file.write(array)
-    else:
-        with open(file_path, "w") as file:
-            for i in range(0,len(data)): 
-                for j in range(0,len(data[i])):
-                    file.write(str(data[i][j][0]) + ", " +str(data[i][j][1]) + ";")
-                file.write(str("\n"))
-    
+    with open(file_path, 'ab') as file:
+        file.write(byte_array)
+        
 def calculateFileSizeDifferance(fileA, fileB):
     #check if files exist
     if os.path.exists(fileA) and os.path.exists(fileB):
@@ -62,7 +49,7 @@ def compress_data(audio_data):
         if current_sign and audio_data[i] >= max_amplitude:
             max_amplitude = audio_data[i]
         #searching for max negative amplitude
-        elif not current_sign and audio_data[i] < min_amplitude:
+        elif audio_data[i] < min_amplitude:
             min_amplitude = audio_data[i]
         #updating the sign
         current_sign = True if audio_data[i] >= 0 else False
@@ -101,11 +88,14 @@ if __name__ == "__main__":
         compressed_data = []
         if info.channels == 1:
             compressed_data = compress_data(audio_data)
+            writeToFile(compressed_data)
+            writeToBinaryFile(compressed_data)
         else:
             for i in range(0,audio_data.shape[1]):
-                compressed_data.append(compress_data(audio_data[:,i]))
-        writeToFile(compressed_data,info.channels)
-        writeToBinaryFile(info.channels,compressed_data)
+                compressed_data = compress_data(audio_data[:,i])
+                writeToFile(compressed_data)
+                writeToBinaryFile(compressed_data)
+        
         calculateFileSizeDifferance(os.path.abspath("compressed_audio.txt"),os.path.abspath(file_path))
     else:
         print("No file selected")

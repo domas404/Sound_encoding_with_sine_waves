@@ -26,10 +26,11 @@ def calculate_file_size_differance(fileA, fileB):
             temp = fileA_size
             fileA_size = fileB_size
             fileB_size = temp
-        #calculate differences
+        #compare file sizes
+        ratio = int(fileB_size/fileA_size)
         print(f"{os.path.basename(fileA)} occupies {fileA_size} bytes.")
         print(f"{os.path.basename(fileB)} occupies {fileB_size} bytes.")
-        print(f"{os.path.basename(fileA)} occupies {int(fileB_size/fileA_size)} times less disk space than {os.path.basename(fileB)}.")
+        print(f"{os.path.basename(fileA)} occupies {ratio} time{'s' if ratio != 1 else ''} less disk space than {os.path.basename(fileB)}.")
     else:
         print(f"The file {fileA} and/or file {fileB} does not exist.")
     

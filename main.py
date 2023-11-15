@@ -10,12 +10,12 @@ def write_to_txt_file(data):
     with open(RESULTS_FILE_PATH, "a") as file:
         for i in range(0,len(data)):
             file.write(str(data[i][0])+" "+str(data[i][1]) + ";")
-        file.write("\n")      
+        file.write("\n")
           
 def delete_old_results_file():
     if os.path.exists(RESULTS_FILE_PATH):
         os.remove(RESULTS_FILE_PATH)
-        
+
 def calculate_file_size_differance(fileA, fileB):
     #check if files exist
     if os.path.exists(fileA) and os.path.exists(fileB):
@@ -39,24 +39,26 @@ def compress_data(audio_data):
     min_amplitude = float('inf')
     count = 0
     compressed_audio_data = []
-    current_sign = True if audio_data[0] >= 0 else False 
+    current_sign = audio_data[0] >= 0
     previous_sign = current_sign
-    for i in range(0,len(audio_data)):
+    for value in audio_data:
         #calculating samples
         count += 1
         #searching for max positive amplitude
-        if current_sign and audio_data[i] >= max_amplitude:
-            max_amplitude = audio_data[i]
+        if current_sign and value >= max_amplitude:
+            max_amplitude = value
         #searching for max negative amplitude
-        elif audio_data[i] < min_amplitude:
-            min_amplitude = audio_data[i]
+        elif value < min_amplitude:
+            min_amplitude = value
         #updating the sign
-        current_sign = True if audio_data[i] >= 0 else False
+        current_sign = value >= 0
         #passed zero in the x axis
         if current_sign != previous_sign:
             # 1/(count*2/sample_rate) T = count/sample_rate, F = 1/T,
             # count*2 because we are calculating the frequency for the whole sine wave
-            compressed_audio_data.append([max_amplitude if previous_sign else min_amplitude,'{:.2f}'.format(1/(count*2/sample_rate))])
+            amplitude = max_amplitude if previous_sign else min_amplitude
+            frequency = '{:.2f}'.format(sample_rate/(2*count))
+            compressed_audio_data.append([amplitude, frequency])
             previous_sign = current_sign
             max_amplitude = float('-inf')
             min_amplitude = float('inf')

@@ -4,34 +4,32 @@ import soundfile as sf
 import numpy as np
 import os
 
-def writeToFile(data):
-    file_path = "compressed_audio.txt"
-    with open(file_path, "a") as file:
+RESULTS_FILE_PATH = "compressed_audio.txt"
+
+def write_to_txt_file(data):
+    with open(RESULTS_FILE_PATH, "a") as file:
         for i in range(0,len(data)):
             file.write(str(data[i][0])+" "+str(data[i][1]) + ";")
-        file.write("\n")
+        file.write("\n")      
+          
+def delete_old_results_file():
+    if os.path.exists(RESULTS_FILE_PATH):
+        os.remove(RESULTS_FILE_PATH)
         
-def writeToBinaryFile(data):
-    array = np.array(data)
-    byte_array = array.tobytes()
-    file_path = "compressed_audio.bin"
-    with open(file_path, 'ab') as file:
-        file.write(byte_array)
-        
-def calculateFileSizeDifferance(fileA, fileB):
+def calculate_file_size_differance(fileA, fileB):
     #check if files exist
     if os.path.exists(fileA) and os.path.exists(fileB):
         #get file sizes
         fileA_size = os.path.getsize(fileA)
         fileB_size = os.path.getsize(fileB)
-        print(fileA_size)
-        print(fileB_size)
         if fileA_size > fileB_size:
             temp = fileA_size
             fileA_size = fileB_size
             fileB_size = temp
         #calculate differences
-        print(f"{os.path.basename(fileA)} occupies {'{0:.2f}'.format((1 - fileA_size/fileB_size)*100)} % ({fileB_size - fileA_size} bytes) less than {os.path.basename(fileB)}.")
+        print(f"{os.path.basename(fileA)} occupies {fileA_size} bytes.")
+        print(f"{os.path.basename(fileB)} occupies {fileB_size} bytes.")
+        print(f"{os.path.basename(fileA)} occupies {int(fileB_size/fileA_size)} times less disk space than {os.path.basename(fileB)}.")
     else:
         print(f"The file {fileA} and/or file {fileB} does not exist.")
     
@@ -55,23 +53,25 @@ def compress_data(audio_data):
         current_sign = True if audio_data[i] >= 0 else False
         #passed zero in the x axis
         if current_sign != previous_sign:
-            compressed_audio_data.append([max_amplitude if previous_sign else min_amplitude,count])
+            # 1/(count*2/sample_rate) T = count/sample_rate, F = 1/T,
+            # count*2 because we are calculating the frequency for the whole sine wave
+            compressed_audio_data.append([max_amplitude if previous_sign else min_amplitude,'{:.2f}'.format(1/(count*2/sample_rate))])
             previous_sign = current_sign
             max_amplitude = float('-inf')
             min_amplitude = float('inf')
             count = 0
     return compressed_audio_data
 if __name__ == "__main__":
+    delete_old_results_file()
     root = tk.Tk()
     root.withdraw()
-    file_path = filedialog.askopenfilename(title="Select a file")
-
-    if file_path:
-
-        audio_data, sample_rate = sf.read(file_path)
-        info = sf.info(file_path)
+    selected_file = filedialog.askopenfilename(title="Select a file")
+    
+    if selected_file:
+        audio_data, sample_rate = sf.read(selected_file)
+        info = sf.info(selected_file)
         bits = int(info.subtype.split("_")[1])
-        file_path = os.path.basename(file_path)
+        selected_file = os.path.basename(selected_file)
         audio_data = np.multiply(audio_data, 2**(bits-1))
 
         label = ""
@@ -88,14 +88,11 @@ if __name__ == "__main__":
         compressed_data = []
         if info.channels == 1:
             compressed_data = compress_data(audio_data)
-            writeToFile(compressed_data)
-            writeToBinaryFile(compressed_data)
+            write_to_txt_file(compressed_data)
         else:
             for i in range(0,audio_data.shape[1]):
                 compressed_data = compress_data(audio_data[:,i])
-                writeToFile(compressed_data)
-                writeToBinaryFile(compressed_data)
-        
-        calculateFileSizeDifferance(os.path.abspath("compressed_audio.txt"),os.path.abspath(file_path))
+                write_to_txt_file(compressed_data)
+        calculate_file_size_differance(os.path.abspath(RESULTS_FILE_PATH),os.path.abspath(selected_file))
     else:
         print("No file selected")
